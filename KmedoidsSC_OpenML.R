@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Cargar bibliotecas necesarias
+# Load necessary libraries
 # -----------------------------------------------------------------------------
 if (!require("cluster")) install.packages("cluster")
 library(cluster)
@@ -11,7 +11,7 @@ if (!require("dplyr")) install.packages("dplyr")
 library(dplyr)
 
 # -----------------------------------------------------------------------------
-# Función para preparar datos con validación de la variable dependiente
+# Function to prepare data with dependent variable validation
 # -----------------------------------------------------------------------------
 prepare_data <- function(dataset) {
   dataset <- as.data.frame(dataset)
@@ -29,31 +29,31 @@ prepare_data <- function(dataset) {
 }
 
 # -----------------------------------------------------------------------------
-# Función SC_medoids: clustering con KmedoidsSC
+# SC_medoids Function: clustering using KmedoidsSC
 # -----------------------------------------------------------------------------
 SC_medoids <- function(D, k, E, C = NULL) {
   if (is.null(C)) {
     C <- sample(1:nrow(D), k)
   }
   
-  # Asigna inicialmente cada punto al medoid más cercano
+  # Initially assign each point to the nearest medoid
   cl <- max.col(-D[, C, drop = FALSE])
   
-  # Ordena los puntos por su distancia al medoid más cercano
+  # Order points by their distance to the nearest medoid
   sorted_points <- order(apply(D[, C, drop = FALSE], 1, min))
   
-  # Asigna los primeros E[i] puntos a cada grupo i
+  # Assign the first E[i] points to each group i
   for (i in 1:k) {
     cl[sorted_points[1:E[i]]] <- i
     sorted_points <- sorted_points[-(1:E[i])]
   }
   
-  # Asigna los puntos restantes al medoid más cercano
+  # Assign the remaining points to the nearest medoid
   for (point in sorted_points) {
     cl[point] <- which.min(D[point, C])
   }
   
-  # Genera etiquetas de cluster para cada punto
+  # Generate cluster labels for each point
   labels <- numeric(nrow(D))
   for (i in 1:k) {
     ii <- which(cl == i)
@@ -64,30 +64,30 @@ SC_medoids <- function(D, k, E, C = NULL) {
 }
 
 # -----------------------------------------------------------------------------
-# Función para ejecutar KmedoidsSC en un dataset
+# Function to run KmedoidsSC on a dataset
 # -----------------------------------------------------------------------------
 run_KmedoidsSC <- function(dataset, target_cardinality, dataset_name) {
-  # Preparar datos
+  # Prepare data
   prepared <- prepare_data(dataset)
   if (is.null(prepared)) {
-    stop("El dataset no está en un formato válido.")
+    stop("The dataset is not in a valid format.")
   }
   X <- prepared$X
   y <- prepared$y
   
-  # Calcular la matriz de distancias utilizando la distancia coseno
+  # Calculate the distance matrix using cosine distance
   D <- proxy::dist(as.matrix(X), method = "cosine")
   D <- as.matrix(D)
   
-  # Definir número de clusters a partir de la cardinalidad real
+  # Define number of clusters from the real cardinality
   E <- target_cardinality
   k <- length(E)
   
-  # Obtener medoids iniciales con PAM
+  # Obtain initial medoids with PAM
   pam_result <- pam(X, k)
   C <- pam_result$id.med
   
-  # Medir exclusivamente la ejecución de la función SC_medoids
+  # Measure exclusively the execution time of the SC_medoids function
   start_SC <- Sys.time()
   result <- SC_medoids(D, k, E, C)
   end_SC <- Sys.time()
@@ -95,22 +95,22 @@ run_KmedoidsSC <- function(dataset, target_cardinality, dataset_name) {
   
   label_pred <- result$labels
   
-  # Calcular el coeficiente de silueta
+  # Calculate the silhouette coefficient
   silhouette_values <- silhouette(x = label_pred, dist = as.dist(D))
   mean_silhouette <- mean(silhouette_values[, "sil_width"])
   
-  # Calcular ARI, AMI y NMI
+  # Calculate ARI, AMI, and NMI
   ARI_value <- ARI(y, label_pred)
   AMI_value <- AMI(y, label_pred)
   NMI_value <- NMI(y, label_pred)
   
-  # Obtener la cardinalidad predicha (número de elementos por cluster)
+  # Get the predicted cardinality (number of elements per cluster)
   cardinality_pred <- as.integer(table(label_pred))
   
-  # Calcular incumplimientos en las restricciones de tamaño
+  # Calculate violations in size constraints
   violations <- sum(abs(cardinality_pred - target_cardinality))
   
-  # Número de clusters, instancias y características
+  # Number of clusters, instances, and features
   num_clusters <- length(unique(label_pred))
   num_instances <- nrow(X)
   num_features <- ncol(X) + 1
@@ -127,12 +127,12 @@ run_KmedoidsSC <- function(dataset, target_cardinality, dataset_name) {
     cardinality_pred = cardinality_pred,
     cardinality_real = target_cardinality,
     Violations = violations,
-    Execution_Time = SC_time  # Nombre de columna unificado
+    Execution_Time = SC_time  # Unified column name
   ))
 }
 
 # -----------------------------------------------------------------------------
-# Data frame global para almacenar los resultados de KmedoidsSC
+# Global data frame to store KmedoidsSC results
 # -----------------------------------------------------------------------------
 global_results_KmedoidsSC <- data.frame(
   name = character(),
@@ -151,36 +151,36 @@ global_results_KmedoidsSC <- data.frame(
 )
 
 # -----------------------------------------------------------------------------
-# Ejecución del algoritmo KmedoidsSC sobre la lista de datasets (odatasets_unique)
+# Run the KmedoidsSC algorithm over the dataset list (odatasets_unique)
 # -----------------------------------------------------------------------------
-# Se asume que odatasets_unique está disponible y tiene las siguientes columnas:
-# - dataset: lista con los datasets (cada elemento es accesible como odatasets_unique[i]$dataset[[1]])
-# - name: nombre del dataset
-# - class_distribution_vector: vector con la cardinalidad real
+# It is assumed that odatasets_unique is available and contains the following columns:
+# - dataset: list of datasets (each element is accessible as odatasets_unique[i]$dataset[[1]])
+# - name: dataset name
+# - class_distribution_vector: vector with the real cardinality
 
 start_time_total <- Sys.time()
 
 for (i in 1:nrow(odatasets_unique)) {
-  cat("\n\n--- Ejecutando para dataset en la posición:", i, "---\n")
+  cat("\n\n--- Running for dataset at position:", i, "---\n")
   
   tryCatch({
-    # Extraer dataset, nombre y cardinalidad real
+    # Extract dataset, name, and real cardinality
     dataset <- odatasets_unique[i, ]$dataset[[1]]
     dataset_name <- odatasets_unique[i, ]$name
     target_cardinality <- odatasets_unique[i, ]$class_distribution_vector[[1]]
     
     if (is.null(dataset) || is.null(target_cardinality)) {
-      cat("Dataset o cardinalidad no disponibles en la posición", i, ". Saltando...\n")
+      cat("Dataset or cardinality not available at position", i, ". Skipping...\n")
       next
     }
     
-    # Ejecutar KmedoidsSC y obtener el tiempo de ejecución de SC_medoids
+    # Run KmedoidsSC and obtain the execution time of SC_medoids
     result <- run_KmedoidsSC(dataset, target_cardinality, dataset_name)
     
-    # Mostrar en consola el incumplimiento de restricciones
-    cat("Incumplimiento en las restricciones de tamaño (Violations):", result$Violations, "\n")
+    # Print size constraint violations to console
+    cat("Size constraint violations:", result$Violations, "\n")
     
-    # Agregar resultados al data frame global, incluyendo la columna Execution_Time
+    # Add results to the global data frame, including the Execution_Time column
     global_results_KmedoidsSC <- rbind(global_results_KmedoidsSC, data.frame(
       name = result$dataset_name,
       ARI = result$ARI,
@@ -198,25 +198,25 @@ for (i in 1:nrow(odatasets_unique)) {
     ))
     
   }, error = function(e) {
-    cat("Error procesando dataset en la posición", i, ":", e$message, "\n")
+    cat("Error processing dataset at position", i, ":", e$message, "\n")
   })
 }
 
 end_time_total <- Sys.time()
 total_execution_time <- as.numeric(difftime(end_time_total, start_time_total, units = "secs"))
-cat("\nTiempo total de ejecución (incluyendo preparación e iteración sobre datasets):", total_execution_time, "segundos.\n")
+cat("\nTotal execution time (including data preparation and iteration over datasets):", total_execution_time, "seconds.\n")
 
 # -----------------------------------------------------------------------------
-# Preparar los resultados para visualización y guardar en CSV
+# Prepare results for visualization and save to CSV
 # -----------------------------------------------------------------------------
 global_results_KmedoidsSC$cardinality_pred <- sapply(global_results_KmedoidsSC$cardinality_pred, paste, collapse = ", ")
 global_results_KmedoidsSC$cardinality_real <- sapply(global_results_KmedoidsSC$cardinality_real, paste, collapse = ", ")
 
-# Obtener la intersección de nombres (datasets comunes)
+# Get intersection of names (common datasets)
 common_names <- intersect(global_results_total$name, global_results_KmedoidsSC$name)
 
-# Filtrar global_results_KmedoidsSC para que sólo contenga los datasets con nombres comunes
+# Filter global_results_KmedoidsSC to only include datasets with common names
 global_results_KmedoidsSC <- global_results_KmedoidsSC[global_results_KmedoidsSC$name %in% common_names, ]
 
-# Escribir los resultados en un archivo CSV
+# Write the results to a CSV file
 write.csv(global_results_KmedoidsSC, "results_KmedoidsSC.csv", row.names = FALSE)

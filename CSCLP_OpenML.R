@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Cargar bibliotecas necesarias
+# Load necessary libraries
 # -----------------------------------------------------------------------------
 if (!require("cluster")) install.packages("cluster")
 library(cluster)
@@ -11,46 +11,47 @@ if (!require("lpSolve")) install.packages("lpSolve")
 library(lpSolve)
 if (!require("dplyr")) install.packages("dplyr")
 library(dplyr)
+
 # -----------------------------------------------------------------------------
-# Función CSCLP: clustering con restricciones de tamaño mediante programación lineal
+# CSCLP Function: clustering with size constraints using linear programming
 # -----------------------------------------------------------------------------
 run_CSCLP <- function(dataset, target_cardinality, dataset_name) {
-  # Preparar datos
+  # Prepare data
   prepared <- prepare_data(dataset)
-  if (is.null(prepared)) stop("El dataset no está en un formato válido.")
+  if (is.null(prepared)) stop("The dataset is not in a valid format.")
   X <- prepared$X
   y <- prepared$y
   
-  # Calcular la matriz de distancias usando la distancia coseno
+  # Calculate the distance matrix using cosine distance
   D_full <- proxy::dist(as.matrix(X), method = "cosine")
   D_full <- as.matrix(D_full)
-  distancia <- D_full  # Se usará para la silueta
+  distancia <- D_full  # This will be used for silhouette calculation
   
-  r <- nrow(D_full)  # Número total de documentos
-  k <- length(target_cardinality)  # Número de clusters deseados
+  r <- nrow(D_full)  # Total number of documents
+  k <- length(target_cardinality)  # Desired number of clusters
   
-  # Para la formulación, se usa n2 = (cardinalidad real - 1), pues se excluyen los centroides
+  # For the formulation, use n2 = (real cardinality - 1) because centroids are excluded
   n2 <- matrix(target_cardinality - 1, ncol = 1)
   
-  # Obtener índices de centroides mediante PAM (similar a KMedoidsSC)
+  # Get indices of centroids using PAM (similar to KMedoidsSC)
   pam_result <- pam(X, k)
-  c <- pam_result$id.med  # Índices de los centroides
+  c <- pam_result$id.med  # Indices of the centroids
   
-  # Obtener el vector de índices de documentos que NO son centroides
+  # Get the vector of indices of documents that are NOT centroids
   v <- 1:r
   v <- v[!v %in% c]
   
-  # Ajustar la matriz de distancias:
-  # Eliminar filas de D_full correspondientes a documentos NO centroides
+  # Adjust the distance matrix:
+  # Remove rows of D_full corresponding to non-centroid documents
   D <- D_full[-v, ]
-  # Convertir las filas en vector (aunque f1 no se utiliza posteriormente)
+  # Convert rows to vector (although f1 is not used later)
   f1 <- as.vector(t(D))
-  # Eliminar las columnas correspondientes a los centroides
+  # Remove columns corresponding to the centroids
   D <- D[, -c]
-  # Convertir la matriz resultante en vector para la programación lineal
+  # Convert the resulting matrix to a vector for linear programming
   f <- as.vector(t(D))
   
-  # Construcción de la matriz de restricciones (Aeq)
+  # Build the constraint matrix (Aeq)
   ncolD <- ncol(D)
   Aeq1 <- matrix(0, nrow = k, ncol = length(f))
   for (i in 1:ncolD) {
@@ -68,12 +69,12 @@ run_CSCLP <- function(dataset, target_cardinality, dataset_name) {
   Aeq <- rbind(Aeq1, Aeq2)
   beq <- c(n2, rep(1, ncolD))
   
-  # Configuración del modelo de programación lineal binaria
+  # Configure the binary linear programming model
   A <- Aeq
   dir <- rep("==", nrow(Aeq))
   rhs <- beq
   
-  # Medir únicamente el tiempo de resolución del modelo LP y reconstrucción de asignación
+  # Measure only the time for solving the LP model and reconstructing the assignment
   start_alg <- Sys.time()
   result_lp <- lp(direction = "min", objective.in = f, const.mat = A, 
                   const.dir = dir, const.rhs = rhs, all.bin = TRUE)
@@ -95,22 +96,22 @@ run_CSCLP <- function(dataset, target_cardinality, dataset_name) {
     label_pred[ind] <- i
   }
   
-  # Cálculo del coeficiente de silueta utilizando la matriz de distancias original
+  # Calculate the silhouette coefficient using the original distance matrix
   silhouette_values <- silhouette(x = label_pred, dist = as.dist(distancia))
   mean_silhouette <- mean(silhouette_values[, "sil_width"])
   
-  # Cálculo de las métricas ARI, AMI y NMI
+  # Calculate ARI, AMI, and NMI
   ARI_value <- ARI(y, label_pred)
   AMI_value <- AMI(y, label_pred)
   NMI_value <- NMI(y, label_pred)
   
-  # Obtener la cardinalidad predicha (número de elementos por cluster)
+  # Get the predicted cardinality (number of elements per cluster)
   cardinality_pred <- as.integer(table(label_pred))
   
-  # Calcular los incumplimientos en las restricciones de tamaño
+  # Calculate the violations in size constraints
   violations <- sum(abs(cardinality_pred - target_cardinality))
   
-  # Número de clusters, instancias y características
+  # Number of clusters, instances, and features
   num_clusters <- length(unique(label_pred))
   num_instances <- nrow(X)
   num_features <- ncol(X) + 1
@@ -127,12 +128,12 @@ run_CSCLP <- function(dataset, target_cardinality, dataset_name) {
     cardinality_pred = cardinality_pred,
     cardinality_real = target_cardinality,
     Violations = violations,
-    Execution_Time = alg_time  # Tiempo medido del algoritmo CSCLP
+    Execution_Time = alg_time  # Measured time of the CSCLP algorithm
   ))
 }
 
 # -----------------------------------------------------------------------------
-# Data frame global para almacenar los resultados de CSCLP
+# Global data frame to store CSCLP results
 # -----------------------------------------------------------------------------
 global_results_CSCLP <- data.frame(
   name = character(),
@@ -151,37 +152,37 @@ global_results_CSCLP <- data.frame(
 )
 
 # -----------------------------------------------------------------------------
-# Ejecución del algoritmo CSCLP sobre la lista de datasets (odatasets_unique)
+# Run the CSCLP algorithm on the list of datasets (odatasets_unique)
 # -----------------------------------------------------------------------------
-# Se asume que odatasets_unique está disponible y contiene las siguientes columnas:
-# - dataset: lista con los datasets (cada uno accesible como odatasets_unique[i]$dataset[[1]])
-# - name: nombre del dataset
-# - class_distribution_vector: vector con la cardinalidad real
+# It is assumed that odatasets_unique is available and contains the following columns:
+# - dataset: list of datasets (each accessible as odatasets_unique[i]$dataset[[1]])
+# - name: dataset name
+# - class_distribution_vector: vector with the real cardinality
 
 start_time_total <- Sys.time()
 
 for (i in 1:nrow(odatasets_unique)) {
-  cat("\n\n--- Ejecutando CSCLP para dataset en la posición:", i, "---\n")
+  cat("\n\n--- Running CSCLP for dataset at position:", i, "---\n")
   start_time <- Sys.time()
   
   tryCatch({
-    # Extraer dataset, nombre y cardinalidad real
+    # Extract dataset, name, and real cardinality
     dataset <- odatasets_unique[i, ]$dataset[[1]]
     dataset_name <- odatasets_unique[i, ]$name
     target_cardinality <- odatasets_unique[i, ]$class_distribution_vector[[1]]
     
     if (is.null(dataset) || is.null(target_cardinality)) {
-      cat("Dataset o cardinalidad no disponibles en la posición", i, ". Saltando...\n")
+      cat("Dataset or cardinality not available at position", i, ". Skipping...\n")
       next
     }
     
-    # Ejecutar CSCLP y obtener el tiempo de ejecución del algoritmo (medido en run_CSCLP)
+    # Run CSCLP and obtain the execution time of the algorithm (measured in run_CSCLP)
     result <- run_CSCLP(dataset, target_cardinality, dataset_name)
     
-    # Mostrar en consola el incumplimiento de restricciones
-    cat("Incumplimiento en las restricciones (Violations):", result$Violations, "\n")
+    # Print size constraint violations to the console
+    cat("Size constraint violations:", result$Violations, "\n")
     
-    # Agregar resultados al data frame global, incluyendo la columna Execution_Time
+    # Add results to the global data frame, including the Execution_Time column
     global_results_CSCLP <- rbind(global_results_CSCLP, data.frame(
       name = result$dataset_name,
       ARI = result$ARI,
@@ -199,24 +200,24 @@ for (i in 1:nrow(odatasets_unique)) {
     ))
     
     end_time <- Sys.time()
-    cat("Tiempo de ejecución para la posición", i, ":", as.numeric(difftime(end_time, start_time, units = "secs")), "segundos\n")
+    cat("Execution time for position", i, ":", as.numeric(difftime(end_time, start_time, units = "secs")), "seconds\n")
     
   }, error = function(e) {
-    cat("Error procesando dataset en la posición", i, ":", e$message, "\n")
+    cat("Error processing dataset at position", i, ":", e$message, "\n")
   })
 }
 
 end_time_total <- Sys.time()
 total_execution_time <- as.numeric(difftime(end_time_total, start_time_total, units = "secs"))
-cat("\nTiempo total de ejecución:", total_execution_time, "segundos.\n")
+cat("\nTotal execution time (including data preparation and iteration over datasets):", total_execution_time, "seconds.\n")
 
 # -----------------------------------------------------------------------------
-# Preparar los resultados para visualización y guardar en CSV
+# Prepare the results for visualization and save to CSV
 # -----------------------------------------------------------------------------
 global_results_CSCLP$cardinality_pred <- sapply(global_results_CSCLP$cardinality_pred, paste, collapse = ", ")
 global_results_CSCLP$cardinality_real <- sapply(global_results_CSCLP$cardinality_real, paste, collapse = ", ")
 
-# (Opcional) Filtrar por nombres comunes si es necesario:
+# (Optional) Filter by common names if necessary:
 common_names <- intersect(global_results_total$name, global_results_CSCLP$name)
 global_results_CSCLP <- global_results_CSCLP[global_results_CSCLP$name %in% common_names, ]
 
