@@ -48,13 +48,13 @@ The `OpenML_Datasets.R` script fetches and preprocesses datasets from OpenML:
 source("OpenML_Datasets.R")  # Load datasets into `odatasets_unique`
 ```
 
-## Execution
+## Basic Usage
 
 ### K-MeansBA
 ```R
-dataset <- odatasets_unique[53]$dataset[[1]]   # Select dataset
-dataset_name <- odatasets_unique[53]$name     # Dataset name
-target_cardinality <- odatasets_unique[53]$class_distribution_vector[[1]]  # Target sizes
+dataset <- odatasets_unique[1]$dataset[[1]]   # Select dataset
+dataset_name <- odatasets_unique[1]$name     # Dataset name
+target_cardinality <- odatasets_unique[1]$class_distribution_vector[[1]]  # Target sizes
 
 # Run clustering
 run_clustering(dataset, target_cardinality, dataset_name)  # Results saved to CSV
