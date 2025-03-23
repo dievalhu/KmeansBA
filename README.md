@@ -1,7 +1,7 @@
 # KMeansBA
 
-![Methodological Process]([fig1_1.png](https://github.com/dievalhu/KmeansBA/blob/9e7ffd69946cb85219e3c72d93907e42c65bd69a/fig1_1.png))  
-*Figure 1: Methodological workflow of the thesis.*
+![Methodological Process](https://raw.githubusercontent.com/dievalhu/KmeansBA/blob/9e7ffd69946cb85219e3c72d93907e42c65bd69a/fig1_1.png)
+*Figure 1: Methodological workflow.*
 
 ## Abstract
 
@@ -10,7 +10,6 @@ Clustering with size constraints organizes data while respecting predefined limi
 Key findings include:
 - **K-MeansBA reliably enforces size constraints** in all evaluated datasets.
 - Competitive clustering quality, particularly in configurations with **fewer clusters**.
-- Linear growth in execution time relative to data size, ensuring scalability for larger datasets.
 
 ## Implemented Algorithms
 
