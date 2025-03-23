@@ -1,6 +1,6 @@
 # KMeansBA
 
-![Methodological Process](https://raw.githubusercontent.com/dievalhu/KmeansBA/blob/9e7ffd69946cb85219e3c72d93907e42c65bd69a/fig1_1.png)
+![Methodological Process](fig1_1.png)
 *Figure 1: Methodological workflow.*
 
 ## Abstract
