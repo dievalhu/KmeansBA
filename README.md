@@ -18,6 +18,7 @@ This repository includes three cardinality-constrained clustering algorithms for
 1. **K-MeansBA**: Our proposed method combining K-Means with the Bat Algorithm for size-constrained optimization.
 2. **K-MedoidsSC**: A K-Medoids-based approach with size constraints.
 3. **CSCLP**: A linear programming-based clustering algorithm with size constraints.
+4. **MILP-KM**: A mixed integer linear programming-based clustering algorithm with size constraints.
 
 ## Repository Structure
 
@@ -25,9 +26,11 @@ This repository includes three cardinality-constrained clustering algorithms for
 - `OpenML_Datasets.R`: Functions to fetch and filter datasets from OpenML.
 - `KmedoidsSC_OpenML.R`: Implementation and evaluation of **K-MedoidsSC**.
 - `CSCLP_OpenML.R`: Implementation and evaluation of **CSCLP**.
+- `MILP_OpenML.R`: Implementation and evaluation of **MILP-KM**.
 - `results_KMeansBA.csv`: Results for K-MeansBA (metrics and execution times).
 - `results_KmedoidsSC.csv`: Results for K-MedoidsSC.
 - `results_CSCLP.csv`: Results for CSCLP.
+- `results_MILP.csv`: Results for MILP-KM.
 - `silhouette_results.csv`: Silhouette coefficients for all instances.
 
 ## Requirements
@@ -68,6 +71,11 @@ result <- run_KmedoidsSC(dataset, target_cardinality, dataset_name)
 ### CSCLP
 ```R
 result <- run_CSCLP(dataset, target_cardinality, dataset_name)  
+```
+
+### MILP
+```R
+result <- run_MILP(dataset, target_cardinality, dataset_name)  
 ```
 
 ## Results
