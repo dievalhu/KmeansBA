@@ -31,7 +31,7 @@ The repository is organized around a simple workflow:
    - `KmedoidsSC.R`
    - `CSCLP.R`
    - `MILP-KM.R`
-4. The folder **`Extended Experiments`** contains experiments where the OpenML connection is removed and datasets are loaded directly from local files instead. :contentReference[oaicite:1]{index=1}
+4. The folder **`Extended Experiments`** contains experiments where the OpenML connection is removed and datasets are loaded directly from local files instead.
 
 ## Repository Structure
 
