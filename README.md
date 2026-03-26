@@ -56,9 +56,6 @@ The repository is organized around a simple workflow:
 - **`Extended Experiments/`**  
   Additional experiments using datasets loaded directly from files, without relying on OpenML.
 
-- **`fig1_1.png`**  
-  Workflow figure used in this README. :contentReference[oaicite:2]{index=2}
-
 ## Requirements
 
 Install the required R packages before running the experiments:
