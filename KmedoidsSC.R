@@ -131,7 +131,7 @@ run_KmedoidsSC <- function(dataset, target_cardinality, dataset_name) {
     cardinality_pred = cardinality_pred,
     cardinality_real = target_cardinality,
     Violations = violations,
-    Execution_Time = SC_time  # Unified column name
+    Execution_Time = SC_time 
   ))
 }
 
@@ -157,11 +157,6 @@ global_results_KmedoidsSC <- data.frame(
 # -----------------------------------------------------------------------------
 # Run the KmedoidsSC algorithm over the dataset list (odatasets_unique)
 # -----------------------------------------------------------------------------
-# It is assumed that odatasets_unique is available and contains the following columns:
-# - dataset: list of datasets (each element is accessible as odatasets_unique[i]$dataset[[1]])
-# - name: dataset name
-# - class_distribution_vector: vector with the real cardinality
-
 start_time_total <- Sys.time()
 
 for (i in 1:nrow(odatasets_unique)) {
@@ -178,13 +173,13 @@ for (i in 1:nrow(odatasets_unique)) {
       next
     }
     
-    # Run KmedoidsSC and obtain the execution time of SC_medoids
+    # Run KmedoidsSC and obtain the execution time
     result <- run_KmedoidsSC(dataset, target_cardinality, dataset_name)
     
     # Print size constraint violations to console
     cat("Size constraint violations:", result$Violations, "\n")
     
-    # Add results to the global data frame, including the Execution_Time column
+    # Add results to the global data frame
     global_results_KmedoidsSC <- rbind(global_results_KmedoidsSC, data.frame(
       name = result$dataset_name,
       ARI = result$ARI,
@@ -208,12 +203,13 @@ for (i in 1:nrow(odatasets_unique)) {
 
 end_time_total <- Sys.time()
 total_execution_time <- as.numeric(difftime(end_time_total, start_time_total, units = "secs"))
-cat("\nTotal execution time (including data preparation and iteration over datasets):", total_execution_time, "seconds.\n")
+cat("\nTotal execution time (including preparation):", total_execution_time, "seconds.\n")
 
 # -----------------------------------------------------------------------------
 # Prepare results for visualization and save to CSV
 # -----------------------------------------------------------------------------
 global_results_KmedoidsSC$cardinality_pred <- sapply(global_results_KmedoidsSC$cardinality_pred, paste, collapse = ", ")
 global_results_KmedoidsSC$cardinality_real <- sapply(global_results_KmedoidsSC$cardinality_real, paste, collapse = ", ")
+
 # Write the results to a CSV file
 write.csv(global_results_KmedoidsSC, "results_KmedoidsSC.csv", row.names = FALSE)

@@ -10,9 +10,11 @@ library(corrplot)
 library(clValid)
 library(RColorBrewer)
 library(factoextra) # For PCA visualization
+
 #----------------------------------------------------------------------------------------------#
 # KMeansBA
 #----------------------------------------------------------------------------------------------#
+
 # Function to prepare data with validation of the dependent variable
 prepare_data <- function(dataset) {
   # Ensure that the dataset is a data.frame
@@ -37,6 +39,7 @@ prepare_data <- function(dataset) {
   # Return a list with variables X and y
   list(X = X, y = y)
 }
+
 # Function to calculate the distance matrix
 calculate_distance_matrix <- function(X) {
   D <- proxy::dist(as.matrix(X), method = "euclidean")
@@ -45,113 +48,43 @@ calculate_distance_matrix <- function(X) {
 
 # Function to adjust cardinality
 adjust_cardinality <- function(cluster_assignment, X, centroids, target_cardinality) {
-  max_iterations <- 1000 # Avoid infinite loops
+  max_iterations <- 1000  # Avoid infinite loops
   iteration <- 0
   
-  for (j in 1:length(target_cardinality)) {
-    cluster_size <- sum(cluster_assignment == j, na.rm = TRUE)
-    
-    while (cluster_size > target_cardinality[j] && iteration < max_iterations) {
-      # Increment the iteration counter
-      iteration <- iteration + 1
-      
-      # Get indices of elements in the excessive cluster
-      idx <- which(cluster_assignment == j)
-      element <- idx[1]
-      
-      # Calculate distances from the element to all centroids
-      distances <- apply(centroids, 1, function(centroid) sum((X[element, ] - centroid)^2))
-      
-      # Identify clusters with available space
-      available_clusters <- which(sapply(1:length(target_cardinality), function(c) {
-        sum(cluster_assignment == c, na.rm = TRUE) < target_cardinality[c]
-      }))
-      
-      # Filter valid alternative clusters
-      valid_clusters <- available_clusters[available_clusters != j]
-      
-      # If there are no valid clusters, mark as "unassigned" (special value)
-      if (length(valid_clusters) == 0) {
-        cluster_assignment[element] <- -1
-        cluster_size <- sum(cluster_assignment == j, na.rm = TRUE)
-        next
-      }
-      
-      # Sort valid clusters by proximity
-      sorted_clusters <- valid_clusters[order(distances[valid_clusters])]
-      
-      # Reassign the element to the closest cluster with space
-      cluster_assignment[element] <- sorted_clusters[1]
-      
-      # Update the size of the current cluster
-      cluster_size <- sum(cluster_assignment == j, na.rm = TRUE)
-    }
-  }
-  
-  # If there are unassigned elements, relocate them to the smallest cluster
-  if (any(cluster_assignment == -1)) {
-    unassigned_idx <- which(cluster_assignment == -1)
-    for (element in unassigned_idx) {
-      # Find the cluster with available space and the smallest size
-      smallest_valid_cluster <- which.min(sapply(1:length(target_cardinality), function(c) {
-        if (sum(cluster_assignment == c, na.rm = TRUE) < target_cardinality[c]) {
-          sum(cluster_assignment == c, na.rm = TRUE)
-        } else {
-          Inf
-        }
-      }))
-      
-      # Assign the element to the cluster with the smallest size
-      cluster_assignment[element] <- smallest_valid_cluster
-    }
-  }
-  
-  # Warning message if the iteration limit was reached
-  if (iteration >= max_iterations) {
-    warning("The adjustment process reached the maximum number of iterations.")
-  }
-  
-  return(cluster_assignment)
-}
-
-adjust_cardinality <- function(cluster_assignment, X, centroids, target_cardinality) {
-  max_iterations <- 1000  # Para evitar bucles infinitos
-  iteration <- 0
-  
-  # Calcular los tamaños iniciales de los clusters (vector de conteos)
+  # Calculate initial cluster sizes (count vector)
   k <- length(target_cardinality)
   cluster_sizes <- sapply(1:k, function(c) sum(cluster_assignment == c, na.rm = TRUE))
   
-  # Mientras haya algún cluster que exceda su cardinalidad y no se exceda el límite de iteraciones
+  # While any cluster exceeds its cardinality and the iteration limit is not reached
   while(any(cluster_sizes > target_cardinality) && iteration < max_iterations) {
     iteration <- iteration + 1
     
-    # Iterar sobre los clusters que exceden el tamaño permitido
+    # Iterate over clusters that exceed the permitted size
     for (j in which(cluster_sizes > target_cardinality)) {
-      # Obtener índices de elementos en el cluster j
+      # Get indices of elements in cluster j
       idx <- which(cluster_assignment == j)
       if (length(idx) == 0) next
       
-      # Seleccionar el primer elemento para reajustar
+      # Select the first element to readjust
       element <- idx[1]
       
-      # Calcular las distancias del elemento a todos los centroides (vectorizado)
-      # Convertimos X[element,] a vector numérico para evitar problemas de formato
+      # Calculate distances from the element to all centroids (vectorized)
+      # Convert X[element,] to numerical vector to avoid formatting issues
       distances <- colSums((t(centroids) - as.numeric(X[element, ]))^2)
       
-      # Identificar clusters que tienen espacio disponible usando los conteos ya calculados
+      # Identify clusters with available space using pre-calculated counts
       available_clusters <- which(cluster_sizes < target_cardinality)
-      # Excluir el cluster actual (j)
+      # Exclude the current cluster (j)
       valid_clusters <- setdiff(available_clusters, j)
       
       if (length(valid_clusters) == 0) {
-        # Si no hay cluster con espacio, se marca el elemento como "no asignado"
+        # If no cluster has space, mark element as "unassigned"
         cluster_assignment[element] <- -1
         cluster_sizes[j] <- cluster_sizes[j] - 1
       } else {
-        # Seleccionar el cluster válido con menor distancia
+        # Select the valid cluster with the minimum distance
         chosen <- valid_clusters[which.min(distances[valid_clusters])]
-        # Actualizar la asignación y los tamaños de clusters
+        # Update assignment and cluster sizes
         cluster_assignment[element] <- chosen
         cluster_sizes[j] <- cluster_sizes[j] - 1
         cluster_sizes[chosen] <- cluster_sizes[chosen] + 1
@@ -159,7 +92,7 @@ adjust_cardinality <- function(cluster_assignment, X, centroids, target_cardinal
     }
   }
   
-  # Para los elementos no asignados (-1), asignarlos al cluster con menor tamaño (y con espacio disponible)
+  # For unassigned elements (-1), assign them to the cluster with the smallest size (and space)
   unassigned_idx <- which(cluster_assignment == -1)
   if (length(unassigned_idx) > 0) {
     for (element in unassigned_idx) {
@@ -169,7 +102,7 @@ adjust_cardinality <- function(cluster_assignment, X, centroids, target_cardinal
         cluster_assignment[element] <- chosen
         cluster_sizes[chosen] <- cluster_sizes[chosen] + 1
       } else {
-        # En caso extremo, asigna arbitrariamente al primer cluster
+        # Extreme case: assign arbitrarily to the first cluster
         cluster_assignment[element] <- 1
         cluster_sizes[1] <- cluster_sizes[1] + 1
       }
@@ -183,7 +116,6 @@ adjust_cardinality <- function(cluster_assignment, X, centroids, target_cardinal
   return(cluster_assignment)
 }
 
-
 # Function to generate an initial solution
 generate_initial_solution <- function(X, target_cardinality, seed = 45) {
   set.seed(seed)
@@ -196,7 +128,7 @@ generate_initial_solution <- function(X, target_cardinality, seed = 45) {
 # Function to calculate centroids
 calculate_centroids <- function(X, cluster_assignment, k) {
   centroids_df <- aggregate(X, by = list(cluster = cluster_assignment), FUN = mean)
-  # Asegurar el orden de los centroides
+  # Ensure the order of centroids
   centroids <- as.matrix(centroids_df[order(centroids_df$cluster), -1, drop = FALSE])
   return(centroids)
 }
@@ -213,7 +145,7 @@ evaluate_solution <- function(cluster_assignment, X, target_cardinality, penalty
 run_bat_algorithm <- function(X, y, target_cardinality, n_bats = 30, max_iterations = 20,
                               f_min = 0, f_max = 2, loudness = 0.5, pulse_rate = 0.5,
                               alpha = 0.9, gamma = 0.9) {
-  set.seed(1521) #set.seed(1807)
+  set.seed(1521) 
   seeds <- sample(1:10000, n_bats, replace = FALSE)
   bats <- lapply(1:n_bats, function(i) {
     list(
@@ -327,23 +259,24 @@ run_clustering <- function(dataset, target_cardinality, dataset_name) {
   y <- data$y
   D <- calculate_distance_matrix(X)
   
-  # Medir solo la ejecución del algoritmo BAT:
+  # Measure only BAT algorithm execution:
   start_algo <- Sys.time()
   results <- run_bat_algorithm(X, y, target_cardinality)
   end_algo <- Sys.time()
   algo_time <- as.numeric(difftime(end_algo, start_algo, units = "secs"))
   
-  # Imprimir resultados (incluye la escritura de silhouette_results.csv)
+  # Print results (includes writing silhouette_results.csv)
   print_results(results, y, X, D, target_cardinality, dataset_name)
   
-  # Devolver el tiempo de ejecución del algoritmo
+  # Return algorithm execution time
   return(algo_time)
 }
+
 #----------------------------------------------------------------------------------------------#
 # Algorithm Execution
 #----------------------------------------------------------------------------------------------#
 
-# Create a global data frame to store results (global_results will be updated in print_results)
+# Create a global data frame to store results
 global_results <- data.frame(
   name = character(),
   Best_Seed = integer(),
@@ -361,12 +294,6 @@ global_results <- data.frame(
 
 # Vector to store the algorithm execution times (only BAT part)
 algorithm_times <- numeric(nrow(odatasets_unique))
-
-# Individual Execution Example
-# dataset <- odatasets_unique[53]$dataset[[1]] # dataset 
-# dataset_name = odatasets_unique[53]$name  # nombre del dataset
-# target_cardinality <- odatasets_unique[53]$class_distribution_vector[[1]] # cardinalidad real
-# run_clustering(dataset, target_cardinality, dataset_name)
 
 for (i in 1:nrow(odatasets_unique)) {
   cat("\n\n--- Executing for dataset at position:", i, "---\n")
@@ -389,7 +316,7 @@ for (i in 1:nrow(odatasets_unique)) {
       next
     }
     
-    # Ejecutar clustering y medir solo la parte del algoritmo de BAT
+    # Run clustering and measure BAT algorithm execution time
     algo_time <- run_clustering(dataset, target_cardinality, dataset_name)
     algorithm_times[i] <- algo_time
     cat("Algorithm execution time for position", i, ":", algo_time, "seconds\n")
@@ -400,7 +327,7 @@ for (i in 1:nrow(odatasets_unique)) {
   })
 }
 
-# Convert lists into columns for visualization in global_results (as before)
+# Convert lists into columns for visualization
 global_results$Cardinality_BAT <- sapply(global_results$cardinality_BAT, paste, collapse = ", ")
 global_results$Cardinality_REAL <- sapply(global_results$cardinality_REAL, paste, collapse = ", ")
 
@@ -413,11 +340,13 @@ violations_data <- data.frame(
   })
 )
 algorithm_times <- algorithm_times[algorithm_times != 0 & !is.na(algorithm_times)]
-# Incorporar el vector de tiempos medidos al data frame final
+
+# Incorporate the execution times into the final data frame
 global_results_total <- cbind(violations_data, global_results)
 global_results_total$Execution_Time <- algorithm_times
 
-# (Opcional) Remover las columnas de cardinalidades si no se desean en el CSV final
+# Optional: Remove cardinality list columns before saving to CSV
 global_results_total$cardinality_BAT <- NULL
 global_results_total$cardinality_REAL <- NULL
+
 write.csv(global_results_total, "results_KMeansBA.csv", row.names = FALSE)

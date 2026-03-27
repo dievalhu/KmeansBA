@@ -4,6 +4,7 @@ library(mlr3oml)
 library(mlr3)
 library(pryr)
 library(dplyr) 
+
 # Function to filter unique datasets
 filter_unique_datasets <- function(dataset) {
   dataset %>%
@@ -73,9 +74,9 @@ get_class_distributions <- function(id, expected_classes) {
 
 # Get the list of datasets
 odatasets <- list_oml_data(
-  number_features = c(2, 15),
-  number_instances = c(100, 5000),
-  number_classes = c(2, 15)
+  number_features = c(4),
+  number_instances = c(111),
+  number_classes = c(2)
 )
 
 # Filter unique datasets

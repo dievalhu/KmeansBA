@@ -40,21 +40,22 @@ prepare_data <- function(dataset) {
   # Return a list with variables X and y
   list(X = X, y = y)
 }
+
 run_CSCLP <- function(dataset, target_cardinality, dataset_name) {
   # Prepare data
   prepared <- prepare_data(dataset)
   if (is.null(prepared)) stop("The dataset is not in a valid format.")
   X <- prepared$X
   y <- prepared$y
-
+  
   if (!all(sapply(X, is.numeric))) {
     stop("Dataset skipped: predictors are not all numeric.")
   }
-    
-  # Calculate the distance distance matrix
+  
+  # Calculate the distance matrix
   D_full <- proxy::dist(as.matrix(X), method = "cosine")
   D_full <- as.matrix(D_full)
-  distancia <- D_full  # This will be used for silhouette calculation
+  distance <- D_full  # This will be used for silhouette calculation
   
   r <- nrow(D_full)  # Total number of documents
   k <- length(target_cardinality)  # Desired number of clusters
@@ -126,22 +127,22 @@ run_CSCLP <- function(dataset, target_cardinality, dataset_name) {
   }
   
   # Calculate the silhouette coefficient using the original distance matrix
-  silhouette_values <- silhouette(x = label_pred, dist = as.dist(distancia))
+  silhouette_values <- silhouette(x = label_pred, dist = as.dist(distance))
   mean_silhouette <- mean(silhouette_values[, "sil_width"])
   
   # Calculate ARI, AMI, and NMI
   ARI_value <- ARI(y, label_pred)
   AMI_value <- AMI(y, label_pred)
   NMI_value <- NMI(y, label_pred)
-  cat()
   
   # Get the predicted cardinality (number of elements per cluster)
   cardinality_pred <- as.integer(table(label_pred))
-  cat(mean_silhouette,"\n")
-  cat(ARI_value,"\n")
-  cat(AMI_value,"\n")
-  cat(NMI_value,"\n")
-  cat(cardinality_pred,"\n")
+  cat("Mean Silhouette:", mean_silhouette, "\n")
+  cat("ARI:", ARI_value, "\n")
+  cat("AMI:", AMI_value, "\n")
+  cat("NMI:", NMI_value, "\n")
+  cat("Predicted Cardinality:", cardinality_pred, "\n")
+  
   # Calculate the violations in size constraints
   violations <- sum(abs(cardinality_pred - target_cardinality))
   
@@ -162,7 +163,7 @@ run_CSCLP <- function(dataset, target_cardinality, dataset_name) {
     cardinality_pred = cardinality_pred,
     cardinality_real = target_cardinality,
     Violations = violations,
-    Execution_Time = alg_time  # Measured time of the CSCLP algorithm
+    Execution_Time = alg_time 
   ))
 }
 
@@ -188,10 +189,6 @@ global_results_CSCLP <- data.frame(
 # -----------------------------------------------------------------------------
 # Run the CSCLP algorithm on the list of datasets (odatasets_unique)
 # -----------------------------------------------------------------------------
-# It is assumed that odatasets_unique is available and contains the following columns:
-# - dataset: list of datasets (each accessible as odatasets_unique[i]$dataset[[1]])
-# - name: dataset name
-# - class_distribution_vector: vector with the real cardinality
 
 start_time_total <- Sys.time()
 for (i in 1:nrow(odatasets_unique)) {
@@ -209,13 +206,13 @@ for (i in 1:nrow(odatasets_unique)) {
       next
     }
     
-    # Run CSCLP and obtain the execution time of the algorithm (measured in run_CSCLP)
+    # Run CSCLP and obtain the execution time
     result <- run_CSCLP(dataset, target_cardinality, dataset_name)
     
     # Print size constraint violations to the console
     cat("Size constraint violations:", result$Violations, "\n")
     
-    # Add results to the global data frame, including the Execution_Time column
+    # Add results to the global data frame
     global_results_CSCLP <- rbind(global_results_CSCLP, data.frame(
       name = result$dataset_name,
       ARI = result$ARI,
@@ -242,13 +239,10 @@ for (i in 1:nrow(odatasets_unique)) {
 
 end_time_total <- Sys.time()
 total_execution_time <- as.numeric(difftime(end_time_total, start_time_total, units = "secs"))
-cat("\nTotal execution time (including data preparation and iteration over datasets):", total_execution_time, "seconds.\n")
+cat("\nTotal execution time:", total_execution_time, "seconds.\n")
 
 # -----------------------------------------------------------------------------
-# Prepare the results for visualization and save to CSV
+# Save to CSV
 # -----------------------------------------------------------------------------
-
-# global_results_CSCLP$cardinality_pred <- sapply(global_results_CSCLP$cardinality_pred, paste, collapse = ", ")
 global_results_CSCLP$cardinality_real <- sapply(global_results_CSCLP$cardinality_real, paste, collapse = ", ")
-
 write.csv(global_results_CSCLP, "results_CSCLP.csv", row.names = FALSE)
