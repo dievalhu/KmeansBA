@@ -74,9 +74,9 @@ get_class_distributions <- function(id, expected_classes) {
 
 # Get the list of datasets
 odatasets <- list_oml_data(
-  number_features = c(4),
-  number_instances = c(111),
-  number_classes = c(2)
+  number_features = c(16, 1000),
+  number_instances = c(5001, 200000),
+  number_classes = c(16, 100)
 )
 
 # Filter unique datasets
