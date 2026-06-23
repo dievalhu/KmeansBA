@@ -66,7 +66,9 @@ install.packages(c(
   "factoextra", "lpSolve"
 ))
 
-## Appendix B: Computational Complexity of `MILP-KM`
+## Appendix B: 
+
+## Computational Complexity of `MILP-KM`
 
 Let `n` denote the number of instances, `d` the number of features, `k` the number of clusters, and `T` the maximum number of outer iterations of the centroid update procedure.
 
@@ -76,14 +78,19 @@ Solving a binary MILP is NP-hard in the worst case, and branch-and-bound based s
 
 ```text
 O(2^(nk))
+```
 
-Because the MILP is solved at each of the \(T\) outer iterations, the overall worst-case time complexity of the algorithm is:
+Because the MILP is solved at each of the `T` outer iterations, the overall worst-case time complexity of the algorithm is:
 
+```text
 O(T · 2^(nk))
+```
 
-Regarding memory requirements, the dominant cost arises from storing the constraint matrix of size \((n+k) \times nk\), together with the pairwise distance matrix used for evaluation. This leads to a space complexity bounded by:
+Regarding memory requirements, the dominant cost arises from storing the constraint matrix of size `(n + k) × nk`, together with the pairwise distance matrix used for evaluation. This leads to a space complexity bounded by:
 
+```text
 O(n^2 k)
+```
 
 Therefore, `MILP-KM` exhibits exponential worst-case time complexity and polynomial but potentially high memory requirements.
 
