@@ -70,27 +70,45 @@ install.packages(c(
 
 ## Computational Complexity of `MILP-KM`
 
-Let `n` denote the number of instances, `d` the number of features, `k` the number of clusters, and `T` the maximum number of outer iterations of the centroid update procedure.
+Let \(n\) denote the number of instances, \(d\) the number of features, \(k\) the number of clusters, and \(T\) the maximum number of outer iterations of the centroid update procedure.
 
-The `MILP-KM` method iteratively solves a binary mixed-integer linear programming (MILP) model in which `n × k` binary decision variables `x_ij ∈ {0,1}` determine the assignment of each instance `i` to cluster `j`. The model includes `n` assignment constraints and `k` size constraints, resulting in `O(n + k)` linear constraints.
+The `MILP-KM` method iteratively solves a binary mixed-integer linear programming (MILP) model in which \(n \times k\) binary decision variables determine the assignment of each instance \(i\) to cluster \(j\):
 
-Solving a binary MILP is NP-hard in the worst case, and branch-and-bound based solvers exhibit exponential complexity in the number of binary variables. Since the number of decision variables is `n × k`, the worst-case time complexity of a single MILP resolution is:
+$$
+x_{ij} \in \{0,1\}, \qquad i=1,\ldots,n,\quad j=1,\ldots,k.
+$$
 
-`
-O(2^(nk))
-`
+The model includes \(n\) assignment constraints and \(k\) size constraints, resulting in:
 
-Because the MILP is solved at each of the `T` outer iterations, the overall worst-case time complexity of the algorithm is:
+$$
+\mathcal{O}(n+k)
+$$
 
-```text
-O(T · 2^(nk))
-```
+linear constraints.
 
-Regarding memory requirements, the dominant cost arises from storing the constraint matrix of size `(n + k) × nk`, together with the pairwise distance matrix used for evaluation. This leads to a space complexity bounded by:
+Solving a binary MILP is NP-hard in the worst case, and branch-and-bound based solvers exhibit exponential complexity in the number of binary variables. Since the number of decision variables is \(n \times k\), the worst-case time complexity of a single MILP resolution is:
 
-```text
-O(n^2 k)
-```
+$$
+\mathcal{O}(2^{nk})
+$$
+
+Because the MILP is solved at each of the \(T\) outer iterations, the overall worst-case time complexity of the algorithm is:
+
+$$
+\mathcal{O}(T \cdot 2^{nk})
+$$
+
+Regarding memory requirements, the dominant cost arises from storing the constraint matrix of size:
+
+$$
+(n+k)\times nk
+$$
+
+together with the pairwise distance matrix used for evaluation. This leads to a space complexity bounded by:
+
+$$
+\mathcal{O}(n^2 k)
+$$
 
 Therefore, `MILP-KM` exhibits exponential worst-case time complexity and polynomial but potentially high memory requirements.
 
