@@ -129,7 +129,7 @@ The core of the algorithm consists of solving a binary integer linear programmin
 In the worst case, solving a binary linear programming problem is NP-hard and exhibits exponential time complexity in the number of binary variables. Consequently, the theoretical worst-case time complexity of `CSCLP` can be expressed as:
 
 $$
-\mathcal{O}\!\left(2^{k(n-k)}\right)
+\mathcal{O}\left(2^{k(n-k)}\right)
 $$
 
 Although modern branch-and-bound solvers often perform better in practice, the exponential worst-case bound remains.
