@@ -66,9 +66,9 @@ install.packages(c(
   "factoextra", "lpSolve"
 ))
 
-## Appendix B: 
+## Appendix B: Computational Complexity Analysis K-MedoidsSC, CSCLP, MILP-KM 
 
-## Computational Complexity of `K-MedoidsSC`
+### Computational Complexity of `K-MedoidsSC`
 
 Let $n$ denote the number of instances, $d$ the number of features, and $k$ the number of clusters.
 
@@ -106,7 +106,7 @@ $$
 
 Additional storage requirements for cluster labels and auxiliary structures scale linearly with $n$ and are asymptotically negligible.
 
-## Computational Complexity of `CSCLP`
+### Computational Complexity of `CSCLP`
 
 Let $n$ denote the number of instances, $d$ the number of features, and $k$ the number of clusters.
 
@@ -141,7 +141,7 @@ $$
 $$
 
 
-## Computational Complexity of `MILP-KM`
+### Computational Complexity of `MILP-KM`
 
 Let \(n\) denote the number of instances, \(d\) the number of features, \(k\) the number of clusters, and \(T\) the maximum number of outer iterations of the centroid update procedure.
 
