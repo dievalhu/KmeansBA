@@ -68,6 +68,79 @@ install.packages(c(
 
 ## Appendix B: 
 
+## Computational Complexity of `K-MedoidsSC`
+
+Let $n$ denote the number of instances, $d$ the number of features, and $k$ the number of clusters.
+
+The `K-MedoidsSC` algorithm first computes the full pairwise distance matrix, which requires:
+
+$$
+\mathcal{O}(n^2 d)
+$$
+
+time and:
+
+$$
+\mathcal{O}(n^2)
+$$
+
+memory.
+
+The initialization step based on the PAM procedure incurs $\mathcal{O}(n^2)$ time complexity in the typical case where $k \ll n$. The subsequent medoid-assignment phase performs cluster assignment, sorting, and cardinality-enforcement operations, whose total cost is bounded by:
+
+$$
+\mathcal{O}(nk+n\log n)
+$$
+
+These terms are asymptotically dominated by the quadratic cost of distance computation and silhouette evaluation. Therefore, the overall time complexity of `K-MedoidsSC` is:
+
+$$
+\mathcal{O}(n^2 d)
+$$
+
+Regarding memory usage, the dominant component is the pairwise distance matrix, yielding a space complexity of:
+
+$$
+\mathcal{O}(n^2)
+$$
+
+Additional storage requirements for cluster labels and auxiliary structures scale linearly with $n$ and are asymptotically negligible.
+
+## Computational Complexity of `CSCLP`
+
+Let $n$ denote the number of instances, $d$ the number of features, and $k$ the number of clusters.
+
+The `CSCLP` method first computes the full pairwise distance matrix, which requires:
+
+$$
+\mathcal{O}(n^2 d)
+$$
+
+time and:
+
+$$
+\mathcal{O}(n^2)
+$$
+
+memory.
+
+The core of the algorithm consists of solving a binary integer linear programming (BILP) model with approximately $k(n-k)$ binary decision variables and $\mathcal{O}(n)$ equality constraints.
+
+In the worst case, solving a binary linear programming problem is NP-hard and exhibits exponential time complexity in the number of binary variables. Consequently, the theoretical worst-case time complexity of `CSCLP` can be expressed as:
+
+$$
+\mathcal{O}\!\left(2^{k(n-k)}\right)
+$$
+
+Although modern branch-and-bound solvers often perform better in practice, the exponential worst-case bound remains.
+
+With respect to memory requirements, the dominant cost arises from storing the pairwise distance matrix and the constraint matrix of the optimization model, leading to an overall space complexity bounded by:
+
+$$
+\mathcal{O}(n^2)
+$$
+
+
 ## Computational Complexity of `MILP-KM`
 
 Let \(n\) denote the number of instances, \(d\) the number of features, \(k\) the number of clusters, and \(T\) the maximum number of outer iterations of the centroid update procedure.
