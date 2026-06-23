@@ -76,9 +76,9 @@ The `MILP-KM` method iteratively solves a binary mixed-integer linear programmin
 
 Solving a binary MILP is NP-hard in the worst case, and branch-and-bound based solvers exhibit exponential complexity in the number of binary variables. Since the number of decision variables is `n × k`, the worst-case time complexity of a single MILP resolution is:
 
-```text
+`
 O(2^(nk))
-```
+`
 
 Because the MILP is solved at each of the `T` outer iterations, the overall worst-case time complexity of the algorithm is:
 
