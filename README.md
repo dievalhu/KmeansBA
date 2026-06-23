@@ -68,7 +68,7 @@ install.packages(c(
 
 ## Appendix A: Datasets Results
 
-Complete per-dataset results are available in [Appendix Tables](appendix_tables.md).
+Complete per-dataset results are available in [Appendix Tables](openml_appendix_tables.md).
 
 ## Appendix B: Computational Complexity Analysis K-MedoidsSC, CSCLP, MILP-KM 
 
