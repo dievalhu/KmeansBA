@@ -60,14 +60,11 @@ The repository is organized around a simple workflow:
 
 Install the required R packages before running the experiments:
 
-```r
 install.packages(c(
   "cluster", "proxy", "mlr3oml", "mlr3", "pryr", "dplyr",
   "aricode", "ggplot2", "corrplot", "clValid", "RColorBrewer",
   "factoextra", "lpSolve"
 ))
-
-```markdown
 
 ## Appendix B: Computational Complexity of `MILP-KM`
 
@@ -94,5 +91,5 @@ Regarding memory requirements, the dominant cost arises from storing the constra
 \]
 
 Therefore, `MILP-KM` exhibits exponential worst-case time complexity and polynomial but potentially high memory requirements.
-```
+
 
