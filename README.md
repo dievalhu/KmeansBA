@@ -145,7 +145,7 @@ $$
 
 Let \(n\) denote the number of instances, \(d\) the number of features, \(k\) the number of clusters, and \(T\) the maximum number of outer iterations of the centroid update procedure.
 
-The `MILP-KM` method iteratively solves a binary mixed-integer linear programming (MILP) model in which \(n\ k\) binary decision variables determine the assignment of each instance \(i\) to cluster \(j\):
+The `MILP-KM` method iteratively solves a binary mixed-integer linear programming (MILP) model in which \(n k\) binary decision variables determine the assignment of each instance \(i\) to cluster \(j\):
 
 $$
 x_{ij} \in \{0,1\}, \qquad i=1,\ldots,n,\quad j=1,\ldots,k.
